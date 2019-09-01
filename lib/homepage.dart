@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import 'package:flutter/material.dart';
 
+
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
 
@@ -56,17 +57,27 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  void _setResults(response) {
-    List<Widget> result = new List();
+  void _setResults(List response) {
+    List<Widget> result = new List();  
+
+    response.removeWhere((item) => response.where((inner)=> inner['collectionId'] == item['collectionId']).first != item);   
 
     for (var item in response) {
-      result.add(
-        Container( child:
-        Image.network(
-          item['artworkUrl100'].toString().replaceAll('100x100', '300x300'),)));
+      result.add(Container(
+          child: GestureDetector(
+              onTap: this._onTap,
+              child: Image.network(item['artworkUrl100']
+                  .toString()
+                  .replaceAll('100x100', '300x300')))));
     }
 
     this.result = result;
+  }
+
+  void _onTap() {
+    setState(() {
+      this._counter = 9999;
+    });
   }
 
   Widget _getItems(BuildContext buildContext, int index) {
@@ -78,42 +89,28 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+  Widget build(BuildContext context) {  
     return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
+      appBar: AppBar(        
+        title: Text(widget.title),    
+            
+      ),                
+       body: Center(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            Container(child:
+            TextField(
+              decoration: InputDecoration(hintText: 'Search', contentPadding: EdgeInsets.all(16)),                                          
+              onChanged: this._setText,
+            ), width: 400, padding: EdgeInsets.all(16)),
             new Expanded(
                 child: ListView.builder(
                     shrinkWrap: false,
-                    
                     itemBuilder: this._getItems,
-                    itemCount: this._size)),
-            TextField(
-              decoration: InputDecoration(hintText: 'Say HI'),
-              onChanged: this._setText,
-            ),
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.display1,
-            ),
+                    itemCount: this._size)),            
           ],
         ),
       ),
