@@ -1,21 +1,13 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 
 import 'package:flutter/material.dart';
-
+import 'package:my_app/debouncer.dart';
+import 'package:my_app/drawer.dart';
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
 
   final String title;
 
@@ -29,6 +21,8 @@ class _MyHomePageState extends State<MyHomePage> {
   List response;
   int _size = 0;
   List<Widget> result;
+  final _debouncer = Debouncer(milliseconds: 5000);
+
   _MyHomePageState() {
     this.response = new List();
   }
@@ -40,7 +34,10 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _retrieveData(String text) async {
-    if (text != '') {
+    print('Retieving Data');
+      if(text == ''){
+        text = 'random';
+      }
       final response = await http.get(
           "https://itunes.apple.com/search?term=${text}&entity=musicTrack");
       try {
@@ -54,13 +51,17 @@ class _MyHomePageState extends State<MyHomePage> {
         this.response = new List();
       }
       setState(() {});
-    }
+
   }
 
   void _setResults(List response) {
-    List<Widget> result = new List();  
+    List<Widget> result = new List();
 
-    response.removeWhere((item) => response.where((inner)=> inner['collectionId'] == item['collectionId']).first != item);   
+    response.removeWhere((item) =>
+        response
+            .where((inner) => inner['collectionId'] == item['collectionId'])
+            .first !=
+        item);
 
     for (var item in response) {
       result.add(Container(
@@ -85,32 +86,40 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _setText(String text) {
-    this._retrieveData(text);
+    _debouncer.run(() => this._retrieveData(text));
   }
 
   @override
-  Widget build(BuildContext context) {  
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(        
-        title: Text(widget.title),    
-            
-      ),                
-       body: Center(
+      drawer: Drawer(
+        // Add a ListView to the drawer. This ensures the user can scroll
+        // through the options in the drawer if there isn't enough vertical
+        // space to fit everything.
+        child: drawer(),
+      ),
+      appBar: AppBar(
+        title: Text(widget.title),
+      ),
+      body: Center(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Container(child:
-            TextField(
-              decoration: InputDecoration(hintText: 'Search', contentPadding: EdgeInsets.all(16)),                                          
-              onChanged: this._setText,
-            ), width: 400, padding: EdgeInsets.all(16)),
+            Container(
+                child: TextField(
+                  decoration: InputDecoration(
+                      hintText: 'Search', contentPadding: EdgeInsets.all(16)),
+                  onChanged: this._setText,
+                ),
+                width: 400,
+                padding: EdgeInsets.all(16)),
             new Expanded(
                 child: ListView.builder(
                     shrinkWrap: false,
                     itemBuilder: this._getItems,
-                    itemCount: this._size)),            
+                    itemCount: this._size)),
           ],
         ),
       ),
